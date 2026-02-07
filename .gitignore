@@ -1,0 +1,40 @@
+# ════════════════════════════════════════════════════════════════════
+# .gitignore  –  FinOps Janitor
+# ════════════════════════════════════════════════════════════════════
+
+# ── Maven / Build ──────────────────────────────────────────────────
+target/
+*.class
+
+# ── IDE ────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.xml
+!pom.xml               # keep pom.xml, ignore other XML like .idea/*.xml
+.vscode/
+*.swp
+*.swo
+
+# ── Runtime artifacts ─────────────────────────────────────────────
+*.jar                  # built JARs go in target/ anyway
+*.war
+*.log
+
+# ── SQLite DB (runtime state — never commit) ──────────────────────
+*.db
+*.db-shm
+*.db-wal
+
+# ── Environment / Secrets (NEVER commit API keys) ─────────────────
+.env
+.env.local
+application-local.yml  # override file with real keys
+application-prod.yml
+
+# ── OS files ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Docker ─────────────────────────────────────────────────────────
+# (uncomment if you add Docker support later)
+# .dockerignore

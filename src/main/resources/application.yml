@@ -1,0 +1,83 @@
+# ════════════════════════════════════════════════════════════════════
+# application.yml  –  FinOps Janitor Configuration
+#
+# EVERYTHING is here.  No magic numbers in the code.
+# Change behavior by editing this file — zero recompilation needed.
+# ════════════════════════════════════════════════════════════════════
+
+# ── Server ─────────────────────────────────────────────────────────
+server:
+  port: 8080
+
+# ── Spring Core ────────────────────────────────────────────────────
+spring:
+  # SQLite datasource (zero-config, just a file)
+  datasource:
+    url: jdbc:sqlite:janitor.db       # creates janitor.db in the working directory
+    driver-class-name: org.sqlite.JDBC
+    # SQLite does not support connection pooling the way Postgres does.
+    # HikariCP (Spring's default) works fine with SQLite but we set a tiny pool.
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+
+  # Application name (shows in logs)
+  application:
+    name: finops-janitor
+
+# ── Actuator ───────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, env   # only expose safe endpoints
+  endpoint:
+    health:
+      show-details: always
+
+# ── Janitor-specific config ────────────────────────────────────────
+janitor:
+  # Label the scanner looks for on namespaces
+  label-key:   "janitor.io/policy"
+  label-value: "hibernate"
+
+  # A namespace must be below these thresholds for > min-age-hours
+  # to be considered IDLE.
+  threshold-cpu-percent: 1.0       # below 1% CPU = idle
+  threshold-mem-percent: 5.0       # below 5% Mem = idle
+  min-age-hours: 2                 # namespace must be at least 2 hours old
+
+  # Cron schedule (Spring cron: sec min hour dom month dow)
+  # Default: every 30 minutes
+  cron: "0 0/30 * * * ?"
+
+  # Global dry-run flag.  Set to true during initial testing so
+  # NOTHING actually gets scaled down.
+  dry-run: true                    # ← FLIP TO false WHEN READY
+
+  # How many lines of pod logs to send to the AI
+  pod-log-lines: 50
+
+# ── Groq (AI) ─────────────────────────────────────────────────────
+groq:
+  # SECURITY: use an environment variable, not a plain string here.
+  # Set it before running: export GROQ_API_KEY=gsk_xxxxx
+  # Spring will resolve ${GROQ_API_KEY} from the environment.
+  api-key: ${GROQ_API_KEY:}        # empty default = AI disabled gracefully
+  model:   "llama3-8b-8192"        # Groq's free-tier Llama 3 model
+  url:     "https://api.groq.com/openai/v1/chat/completions"
+
+# ── Slack ──────────────────────────────────────────────────────────
+slack:
+  # Set to true + provide a webhook URL to get Slack notifications.
+  enabled:     false               # ← FLIP TO true when you have a webhook
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+
+# ── Logging ────────────────────────────────────────────────────────
+logging:
+  level:
+    io.janitor.finops: INFO        # our code: INFO level
+    io.kubernetes:     WARN        # K8s client is chatty; tone it down
+    okhttp3:           WARN        # OkHttp logs every request at DEBUG
+  pattern:
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} – %msg%n"
