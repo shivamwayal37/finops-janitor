@@ -1,4 +1,4 @@
-# 🧹 FinOps Janitor
+# FinOps Janitor
 ### Intelligent Kubernetes Resource Optimization
 
 > A lightweight, AI-augmented Kubernetes controller that identifies idle development
@@ -47,15 +47,15 @@
 
 ---
 
-## 🚀 Quick Start
+### Quick Start
 
-### Prerequisites
+##### Prerequisites
 - Java 21+ (`java --version`)
 - Docker (`docker --version`)
 - K3d (`k3d --version`) — install via: `curl -sSL https://k3d.io/stable/ | bash`
 - Maven (`mvn --version`)
 
-### Step 1: Set up the cluster + test namespaces
+##### Step 1: Set up the cluster + test namespaces
 ```bash
 chmod +x k3d-cluster.sh
 ./k3d-cluster.sh setup
@@ -66,7 +66,7 @@ This creates:
 - `marketing-beta` namespace (labeled, idle nginx) → Janitor WILL touch this
 - `production` namespace (no label) → Janitor IGNORES this
 
-### Step 2: Set environment variables
+##### Step 2: Set environment variables
 ```bash
 # Groq API key (get a free one at https://console.groq.com)
 export GROQ_API_KEY="gsk_your_key_here"
@@ -75,13 +75,13 @@ export GROQ_API_KEY="gsk_your_key_here"
 export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/your/webhook"
 ```
 
-### Step 3: Build and run
+##### Step 3: Build and run
 ```bash
 mvn clean package -DskipTests
 java -Xms64m -Xmx256m -jar target/finops-janitor-1.0.0-SNAPSHOT.jar
 ```
 
-### Step 4: Test it
+##### Step 4: Test
 ```bash
 # See what the Janitor sees right now
 curl http://localhost:8080/janitor/status | jq .
@@ -101,7 +101,7 @@ curl -X POST http://localhost:8080/janitor/wakeup/engineering-dev | jq .
 
 ---
 
-## 📋 API Reference
+### API Reference
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -115,7 +115,7 @@ curl -X POST http://localhost:8080/janitor/wakeup/engineering-dev | jq .
 
 ---
 
-## ⚙️ Configuration
+### Configuration
 
 All settings live in `src/main/resources/application.yml`. Key values:
 
@@ -131,7 +131,7 @@ All settings live in `src/main/resources/application.yml`. Key values:
 
 ---
 
-## 🛡️ Security
+### Security
 
 - **API keys are NEVER hardcoded.** They resolve from environment variables.
 - **Opt-in via labels.** The Janitor only touches namespaces with `janitor.io/policy=hibernate`.
@@ -140,7 +140,7 @@ All settings live in `src/main/resources/application.yml`. Key values:
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 ```bash
 mvn test
@@ -152,7 +152,7 @@ Test coverage includes:
 
 ---
 
-## 🏢 Tech Stack
+## Tech Stack
 
 | Component | Technology | Why |
 |-----------|-----------|-----|
@@ -183,6 +183,6 @@ For 10 dev namespaces:
 
 ---
 
-## 📝 License
+### License
 
 MIT — use it, fork it, learn from it.
