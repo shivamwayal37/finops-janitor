@@ -39,25 +39,41 @@ public class HttpConfig {
     @Component
     @ConfigurationProperties(prefix = "groq")
     public static class GroqProperties {
-        private String apiKey = "";            // GROQ_API_KEY env var
-        private String model  = "llama3-8b-8192";
-        private String url    = "https://api.groq.com/openai/v1/chat/completions";
+        private String apiKey;
+        private String model;
+        private String url;
 
-        // ── getters / setters (Lombok not used to keep deps minimal) ──
-        public String getApiKey() { return apiKey; }
-        public void   setApiKey(String v) { this.apiKey = v; }
-        public String getModel()  { return model; }
-        public void   setModel(String v)  { this.model  = v; }
-        public String getUrl()    { return url; }
-        public void   setUrl(String v)    { this.url    = v; }
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String v) {
+            this.apiKey = v;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String v) {
+            this.model = v;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String v) {
+            this.url = v;
+        }
     }
 
     // ── Slack properties ─────────────────────────────────────────────────────
     @Component
     @ConfigurationProperties(prefix = "slack")
     public static class SlackProperties {
-        private String webhookUrl = "";       // Set in application.yml or env
-        private boolean enabled   = false;    // Master switch — set false during local dev
+        private String webhookUrl;       // Set in application.yml or env
+        private boolean enabled;    // Master switch — set false during local dev
 
         public String  getWebhookUrl()        { return webhookUrl; }
         public void    setWebhookUrl(String v) { this.webhookUrl = v; }

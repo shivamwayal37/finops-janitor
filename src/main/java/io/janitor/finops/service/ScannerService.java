@@ -147,12 +147,16 @@ public class ScannerService {
                     null,      // pretty
                     null,      // allowWatchBookmarks
                     null,      // continue
-                    selector,  // ← THIS is the label selector
-                    null, null, null, null, null, null, null
+                    null,
+                    selector, // this is label selector
+                    null, null, null, null, null, null
             );
             return list.getItems();
         } catch (ApiException e) {
-            LOG.error("[SCAN] Failed to list namespaces: {}", e.getMessage());
+            LOG.error("[SCAN] Failed to list namespaces. Code={}, Body={}",
+                    e.getCode(),
+                    e.getResponseBody(),
+                    e);
             return List.of();
         }
     }

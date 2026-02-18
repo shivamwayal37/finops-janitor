@@ -66,7 +66,7 @@ public class SlackService {
                 *AI Risk Score:* %d / 10
                 *AI Reason:* %s
 
-                ⏳ This namespace will be hibernated in *30 minutes*.
+                  This namespace will be hibernated in *30 minutes*.
                 To prevent this, scale your deployment manually or remove the `janitor.io/policy` label.
                 """.formatted(namespace, decision.riskScore(), decision.reason());
 

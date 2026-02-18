@@ -88,8 +88,7 @@ public class JanitorController {
      * This powers the "audit trail" section of any future dashboard.
      */
     @GetMapping("/history")
-    public ResponseEntity<List<Map<String, Object>>> getHistory(
-            @RequestParam(defaultValue = "20") int limit) {
+    public ResponseEntity<List<Map<String, Object>>> getHistory(@RequestParam(value = "limit", defaultValue = "20") int limit) {
 
         LOG.info("[API] GET /janitor/history (limit={})", limit);
 
