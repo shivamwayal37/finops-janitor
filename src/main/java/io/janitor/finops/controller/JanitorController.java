@@ -139,28 +139,27 @@ public class JanitorController {
      */
     @PostMapping("/hibernate/{namespace}")
     public ResponseEntity<Map<String, Object>> manualHibernate(
-            @PathVariable String namespace,
-            @RequestParam(defaultValue = "false") boolean dryRun) {
+            @PathVariable("namespace") String namespace,
+            @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun) {
 
         LOG.info("[API] POST /janitor/hibernate/{} (dryRun={})", namespace, dryRun);
 
-        // Use a default "manual trigger" AI decision (no actual AI call)
+        // Manual decision (bypasses AI call)
         AIDecision manualDecision = new AIDecision(true, 1, "Manual hibernation triggered via API.");
 
         int replicasDown = hibernation.hibernate(namespace, manualDecision, dryRun);
 
-        if (!dryRun) {
+        if (!dryRun && replicasDown > 0) {
             slack.notifyPreHibernation(namespace, manualDecision);
         }
 
         Map<String, Object> result = Map.of(
-                "namespace",       namespace,
+                "namespace", namespace,
                 "replicasScaledDown", replicasDown,
-                "dryRun",          dryRun,
-                "message",         dryRun
+                "dryRun", dryRun,
+                "message", dryRun
                         ? "Dry run complete. Nothing was changed."
-                        : "Namespace '" + namespace + "' has been hibernated."
-        );
+                        : "Namespace '" + namespace + "' has been hibernated.");
 
         return ResponseEntity.ok(result);
     }
@@ -177,17 +176,26 @@ public class JanitorController {
      *   POST /janitor/wakeup/engineering-dev
      */
     @PostMapping("/wakeup/{namespace}")
-    public ResponseEntity<Map<String, Object>> wakeUp(@PathVariable String namespace) {
+    public ResponseEntity<Map<String, Object>> wakeUp(
+            @PathVariable("namespace") String namespace) {
+
         LOG.info("[API] POST /janitor/wakeup/{}", namespace);
 
         int replicasRestored = hibernation.wakeUp(namespace);
-        slack.notifyWakeUp(namespace, replicasRestored);
+
+        // Only notify Slack if something was actually restored
+        if (replicasRestored > 0) {
+            slack.notifyWakeUp(namespace, replicasRestored);
+        } else {
+            LOG.warn("[API] No deployments restored for namespace {}", namespace);
+        }
 
         Map<String, Object> result = Map.of(
-                "namespace",        namespace,
+                "namespace", namespace,
                 "replicasRestored", replicasRestored,
-                "message",          "Namespace '" + namespace + "' is back online."
-        );
+                "message", replicasRestored > 0
+                        ? "Namespace '" + namespace + "' is back online."
+                        : "No hibernated deployments found in namespace '" + namespace + "'.");
 
         return ResponseEntity.ok(result);
     }
