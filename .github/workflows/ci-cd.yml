@@ -37,6 +37,7 @@ jobs:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
           cache: maven
+          cache-dependency-path: '**/pom.xml'
 
       - name: Run Unit Tests
         # If your pom.xml is in a subfolder, add: working-directory: ./subfolder-name
