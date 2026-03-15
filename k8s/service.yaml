@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: finops-janitor
+  labels:
+    app: finops-janitor
+spec:
+  selector:
+    app: finops-janitor
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP

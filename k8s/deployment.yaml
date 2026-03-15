@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finops-janitor
+  labels:
+    app: finops-janitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finops-janitor
+  template:
+    metadata:
+      labels:
+        app: finops-janitor
+    spec:
+      containers:
+        - name: finops-janitor
+          image: ghcr.io/owner/repo:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finops-janitor-secrets
+                  key: groq_api_key
+            - name: SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finops-janitor-secrets
+                  key: slack_webhook_url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

@@ -63,7 +63,7 @@ groq:
   # SECURITY: use an environment variable, not a plain string here.
   # Set it before running: export GROQ_API_KEY=gsk_xxxxx
   # Spring will resolve ${GROQ_API_KEY} from the environment.
-  api-key: "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"        # empty default = AI disabled gracefully
+  api-key: ${GROQ_API_KEY}    # empty default = AI disabled gracefully
   model:   "llama-3.3-70b-versatile"        # Groq's free-tier Llama 3 model
   url:     "https://api.groq.com/openai/v1/chat/completions"
 
@@ -71,7 +71,7 @@ groq:
 slack:
   # Set to true + provide a webhook URL to get Slack notifications.
   enabled:     true               # ← FLIP TO true when you have a webhook
-  webhook-url: "https://hooks.slack.com/services/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"
+  webhook-url: ${SLACK_WEBHOOK_URL:}
 
 # ── Logging ────────────────────────────────────────────────────────
 logging:

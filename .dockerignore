@@ -1,0 +1,9 @@
+.git
+.github
+.vscode
+target
+*.iml
+*.log
+janitor.db
+README.md
+assets

@@ -231,19 +231,40 @@ public class HibernationService {
      * without accidentally overwriting other fields.
      */
     private void patchReplicas(String namespace, String deploymentName, int replicas) {
-        String patch = """
-                {"spec":{"replicas":%d}}
-                """.formatted(replicas);
-
         try {
-            appsApi.patchNamespacedDeployment(
-                    deploymentName, namespace,
-                    new V1Patch(patch),     // JSON merge patch body
-                    null, null, null, null, null
-            );
+            // Read the current scale object
+            V1Scale scale = appsApi.readNamespacedDeploymentScale(
+                    deploymentName, namespace, null);
+
+            // Update the desired replica count
+            if (scale.getSpec() == null) {
+                scale.setSpec(new V1ScaleSpec());
+            }
+            scale.getSpec().setReplicas(replicas);
+
+            // Apply the change
+            appsApi.replaceNamespacedDeploymentScale(
+                    deploymentName,
+                    namespace,
+                    scale,
+                    null, null, null, null);
+
+            LOG.info("[HIBERNATE] Scaled '{}/{}' to {} replica(s)",
+                    namespace, deploymentName, replicas);
+
         } catch (ApiException e) {
-            throw new KubernetesOperationException(namespace,
-                    "Failed to patch replicas on '" + deploymentName + "': " + e.getMessage(), e);
+            String errorDetails = String.format(
+                    "HTTP %d: %s",
+                    e.getCode(),
+                    e.getResponseBody() != null ? e.getResponseBody() : e.getMessage());
+
+            LOG.error("[HIBERNATE] Failed to scale '{}/{}': {}",
+                    namespace, deploymentName, errorDetails);
+
+            throw new KubernetesOperationException(
+                    namespace,
+                    "Failed to scale '" + deploymentName + "' to " + replicas + " replicas: " + errorDetails,
+                    e);
         }
     }
 

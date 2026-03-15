@@ -1,0 +1,124 @@
+name: CI-CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  JAVA_VERSION: '21'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  ci:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run Unit Tests
+        run: mvn -B -ntp test
+
+      - name: Build JAR
+        run: mvn -B -ntp -DskipTests package
+
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finops-janitor-jar
+          path: target/finops-janitor-*.jar
+
+  docker_publish:
+    name: Build and Publish Container
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: docker_publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check kubeconfig secret
+        id: kube
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        run: |
+          if [ -z "$KUBE_CONFIG" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "KUBE_CONFIG is not set; skipping deploy."
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            mkdir -p "$HOME/.kube"
+            echo "$KUBE_CONFIG" > "$HOME/.kube/config"
+            chmod 600 "$HOME/.kube/config"
+          fi
+
+      - name: Setup kubectl
+        if: steps.kube.outputs.present == 'true'
+        uses: azure/setup-kubectl@v4
+
+      - name: Apply manifests
+        if: steps.kube.outputs.present == 'true'
+        run: |
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/deployment.yaml
+
+      - name: Update image and wait for rollout
+        if: steps.kube.outputs.present == 'true'
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}"
+          kubectl -n default set image deployment/finops-janitor finops-janitor="$IMAGE"
+          kubectl -n default rollout status deployment/finops-janitor --timeout=120s
+
+      - name: Deployment skipped
+        if: steps.kube.outputs.present != 'true'
+        run: echo "Deployment skipped because KUBE_CONFIG is not configured."

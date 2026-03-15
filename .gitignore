@@ -30,6 +30,7 @@ target/
 .env.local
 application-local.yml  # override file with real keys
 application-prod.yml
+application.yml
 
 # ── OS files ───────────────────────────────────────────────────────
 .DS_Store

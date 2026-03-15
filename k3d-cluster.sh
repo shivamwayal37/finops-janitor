@@ -85,19 +85,35 @@ setup_test_namespaces() {
     kubectl create namespace engineering-dev --context "${CONTEXT}" --dry-run=client -o yaml | \
         kubectl apply -f - --context "${CONTEXT}"
 
-    # Add the Janitor label
     kubectl label namespace engineering-dev \
         "janitor.io/policy=hibernate" \
         --context "${CONTEXT}" --overwrite
 
-    # Deploy a simple nginx pod (it will use 0% CPU = idle)
-    kubectl run nginx-idle \
-        --image=nginx:alpine \
-        --namespace=engineering-dev \
-        --context="${CONTEXT}" \
-        --dry-run=client -o yaml | kubectl apply -f - --context "${CONTEXT}"
+    # Create a DEPLOYMENT (not just a pod)
+    cat <<EOF | kubectl apply -f - --context "${CONTEXT}"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-idle
+  namespace: engineering-dev
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+EOF
 
-    echo -e "  ${GREEN}✓ engineering-dev created (labeled, nginx idle)${NC}"
+    echo -e "  ${GREEN}✓ engineering-dev created (labeled, 2 nginx replicas)${NC}"
 
     # ── Namespace 2: marketing-beta (opt-in, idle) ───────────────────
     kubectl create namespace marketing-beta --context "${CONTEXT}" --dry-run=client -o yaml | \
@@ -107,41 +123,75 @@ setup_test_namespaces() {
         "janitor.io/policy=hibernate" \
         --context "${CONTEXT}" --overwrite
 
-    kubectl run nginx-beta \
-        --image=nginx:alpine \
-        --namespace=marketing-beta \
-        --context="${CONTEXT}" \
-        --dry-run=client -o yaml | kubectl apply -f - --context "${CONTEXT}"
+    cat <<EOF | kubectl apply -f - --context "${CONTEXT}"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-beta
+  namespace: marketing-beta
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+EOF
 
-    echo -e "  ${GREEN}✓ marketing-beta created (labeled, nginx idle)${NC}"
+    echo -e "  ${GREEN}✓ marketing-beta created (labeled, 3 nginx replicas)${NC}"
 
     # ── Namespace 3: production (NO label — Janitor must ignore this) ─
     kubectl create namespace production --context "${CONTEXT}" --dry-run=client -o yaml | \
         kubectl apply -f - --context "${CONTEXT}"
 
-    kubectl run nginx-prod \
-        --image=nginx:alpine \
-        --namespace=production \
-        --context="${CONTEXT}" \
-        --dry-run=client -o yaml | kubectl apply -f - --context "${CONTEXT}"
+    cat <<EOF | kubectl apply -f - --context "${CONTEXT}"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-prod
+  namespace: production
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+EOF
 
     echo -e "  ${GREEN}✓ production created (NO label — should be ignored)${NC}"
 
     # ── Wait for pods to be Running ───────────────────────────────────
     echo ""
     echo -e "${YELLOW}[setup] Waiting for pods to reach Running state (up to 60s)...${NC}"
-    kubectl wait --for=condition=ready pod --all \
+    kubectl wait --for=condition=available deployment --all \
         --namespace=engineering-dev --context="${CONTEXT}" --timeout=60s
-    kubectl wait --for=condition=ready pod --all \
+    kubectl wait --for=condition=available deployment --all \
         --namespace=marketing-beta  --context="${CONTEXT}" --timeout=60s
-    kubectl wait --for=condition=ready pod --all \
+    kubectl wait --for=condition=available deployment --all \
         --namespace=production      --context="${CONTEXT}" --timeout=60s
 
     echo ""
     echo -e "${GREEN}[setup] Done! Run the Janitor to see it detect engineering-dev and marketing-beta.${NC}"
     echo ""
-    echo "    java -jar target/finops-janitor-1.0.0-SNAPSHOT.jar"
-    echo "    curl http://localhost:8080/janitor/status"
+    echo "    Test hibernation:"
+    echo "    curl -X POST 'http://localhost:8080/janitor/hibernate/engineering-dev?dryRun=false'"
 }
 
 # ════════════════════════════════════════════════════════════════════
