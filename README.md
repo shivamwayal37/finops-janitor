@@ -17,33 +17,13 @@
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ![Architecture](assets/Architecture.png)
 
 ### The 5-Step Lifecycle
 
-```
-1. SCAN        Scheduler triggers every 30 min
-               └─► ScannerService queries K8s for labeled namespaces
-
-2. METRICS     For each namespace, fetch CPU/Memory
-               └─► If usage > threshold → ACTIVE (skip)
-               └─► If usage < threshold for 2+ hours → IDLE (continue)
-
-3. AI CHECK    Send last 50 lines of pod logs to Groq (Llama-3)
-               └─► AI returns: { safe: bool, riskScore: 1-10, reason: "..." }
-               └─► If safe=false → send Slack ALERT, STOP
-               └─► If safe=true  → continue
-
-4. HIBERNATE   Scale all Deployments in namespace to 0 replicas
-               └─► Save original replica count as K8s annotation
-               └─► Send Slack pre-hibernation notification
-
-5. RECOVER     Developer calls POST /janitor/wakeup/{namespace}
-               └─► Read saved annotation → restore original replicas
-               └─► Clean up annotations
-```
+![Hibernation Lifecycle](assets/finops-janitor-hibernation-lifecycle.png)
 
 ---
 
@@ -165,7 +145,7 @@ Test coverage includes:
 
 ---
 
-## 💰 Cost Savings Calculation
+## Cost Savings Calculation
 
 ```
 Per dev namespace (2 pods, 500m CPU each = 1 vCPU):
