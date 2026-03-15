@@ -13,7 +13,7 @@ permissions:
 env:
   JAVA_VERSION: '21'
   REGISTRY: ghcr.io
-  # Normalizing image name to lowercase to prevent Docker push failures
+  # Normalizing image name to lowercase is required for GHCR
   IMAGE_NAME: shivamwayal37/finops-janitor
   # Opting into Node.js 24 to resolve deprecation warnings
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -27,6 +27,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Debugging step: List files to ensure pom.xml is in the root
+      - name: List files
+        run: ls -R
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -35,7 +39,7 @@ jobs:
           cache: maven
 
       - name: Run Unit Tests
-        # Ensure Maven runs in the root where pom.xml is located
+        # If your pom.xml is in a subfolder, add: working-directory: ./subfolder-name
         run: mvn -B -ntp test
 
       - name: Build JAR
@@ -119,7 +123,6 @@ jobs:
       - name: Update image and wait for rollout
         if: steps.kube.outputs.present == 'true'
         run: |
-          # Use the normalized lowercase image name
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}"
           kubectl -n default set image deployment/finops-janitor finops-janitor="$IMAGE"
           kubectl -n default rollout status deployment/finops-janitor --timeout=120s
