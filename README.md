@@ -93,38 +93,11 @@ This system includes:
 | **HTTP Client** | OkHttp 4.12 | Shared client for Groq + Slack calls |
 | **K8s Client** | Kubernetes Java Client v19 | Official client with full API support |
 
-**Tech Stack Diagram:**
-
-![Architecture](assets/Architecture.png)
-
-![janitor-hibernation-lifecycle](assets/finops-janitor-hibernation-lifecycle.png)
-
 ---
 
 ## How It Works
 
-### The 5-Step Lifecycle
-```
-1. SCAN        Scheduler triggers every 30 min
-               └─► ScannerService queries K8s for labeled namespaces
-
-2. METRICS     For each namespace, fetch CPU/Memory
-               └─► If usage > threshold → ACTIVE (skip)
-               └─► If usage < threshold for 2+ hours → IDLE (continue)
-
-3. AI CHECK    Send last 50 lines of pod logs to Groq (Llama-3.3)
-               └─► AI returns: { safe: bool, riskScore: 1-10, reason: "..." }
-               └─► If safe=false → send Slack ALERT, STOP
-               └─► If safe=true  → continue
-
-4. HIBERNATE   Scale all Deployments in namespace to 0 replicas
-               └─► Save original replica count as K8s annotation
-               └─► Send Slack pre-hibernation notification
-
-5. RECOVER     Developer calls POST /janitor/wakeup/{namespace}
-               └─► Read saved annotation → restore original replicas
-               └─► Clean up annotations
-```
+![janitor-hibernation-lifecycle](assets/finops-janitor-hibernation-lifecycle.png)
 
 ### AI Decision-Making Example
 
@@ -529,10 +502,10 @@ This project is MIT licensed - see the [LICENSE](LICENSE) file for details.
 
 ## 📞 Contact
 
-- **Author**: Your Name
-- **Email**: your.email@example.com
-- **LinkedIn**: [Your Profile](https://linkedin.com/in/yourprofile)
-- **Twitter**: [@yourhandle](https://twitter.com/yourhandle)
+- **Author**: Shivam Wayal
+- **Email**: wayalshivam7@gmail.com
+- **LinkedIn**: [Shivam Wayal](www.linkedin.com/in/shivam-wayal)
+- **Twitter**: [@wayalshivam7](https://x.com/wayalshivam7)
 
 ---
 
