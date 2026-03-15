@@ -120,7 +120,7 @@ All settings live in `src/main/resources/application.yml`. Key values:
 
 ---
 
-## Running Tests
+### Running Tests
 
 ```bash
 mvn test
@@ -132,7 +132,7 @@ Test coverage includes:
 
 ---
 
-## Tech Stack
+### Tech Stack
 
 | Component | Technology | Why |
 |-----------|-----------|-----|
@@ -145,7 +145,7 @@ Test coverage includes:
 
 ---
 
-## Cost Savings Calculation
+### Cost Savings Calculation
 
 ```
 Per dev namespace (2 pods, 500m CPU each = 1 vCPU):
@@ -169,31 +169,31 @@ MIT — use it, fork it, learn from it.
 
 ---
 
-## CI/CD (GitHub Actions)
+### CI/CD (GitHub Actions)
 
 This repo now includes a GitHub Actions pipeline at `.github/workflows/ci-cd.yml`.
 
-### CI (all PRs + pushes)
+#### CI (all PRs + pushes)
 - Runs unit tests (`mvn test`)
 - Builds JAR (`mvn -DskipTests package`)
 - Uploads JAR as workflow artifact
 
-### CD (push to `main`)
+#### CD (push to `main`)
 - Builds and pushes Docker image to GHCR:
   - `ghcr.io/<owner>/<repo>:latest`
   - `ghcr.io/<owner>/<repo>:sha-<commit>`
 - Optionally deploys to Kubernetes if `KUBE_CONFIG` secret is set.
 
-### Required repository settings
+#### Required repository settings
 - `Settings -> Actions -> General -> Workflow permissions`
   - Enable: Read and write permissions (required for GHCR push)
 
-### Optional secrets for deployment
+#### Optional secrets for deployment
 - `KUBE_CONFIG`: kubeconfig content for target cluster
 - `GROQ_API_KEY`: use as cluster secret (`finops-janitor-secrets/groq_api_key`)
 - `SLACK_WEBHOOK_URL`: use as cluster secret (`finops-janitor-secrets/slack_webhook_url`)
 
-### Kubernetes manifests
+#### Kubernetes manifests
 - `k8s/deployment.yaml`
 - `k8s/service.yaml`
 
