@@ -1,4 +1,4 @@
-# 🧹 FinOps Janitor
+# FinOps Janitor
 **AI-augmented Kubernetes controller for intelligent cloud cost optimization**
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
